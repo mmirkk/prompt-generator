@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Prompt para Tableros</title>
+    <!-- Enlace al CDN de Tailwind CSS para estilos rápidos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración de Tailwind para usar el color de acento y la fuente Inter -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'], // Define la fuente Inter
+                    },
+                    colors: {
+                        primary: '#6366F1', // Un color morado suave para acentos
+                        secondary: '#4F46E5', // Un morado más oscuro
+                        accent: '#3B82F6', // Azul para elementos interactivos (cambiado de rosa)
+                        light: '#F3F4F6', // Gris muy claro para fondos
+                        dark: '#1F2937', // Gris oscuro para texto
+                        border: '#D1D5DB', // Gris para bordes sutiles
+                        lautiViolet: '#7341A6', // Un violeta para Lauti
+                        lautiLight: '#F4F7FE', // Un violeta claro para Lauti
+                        muniBlue: '#2589FF', // Un azul para Muni SN
+                        muniLight: '#F4F7FE' // Un azul claro para Muni SN
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Estilo para la fuente Inter (importado de Google Fonts) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos personalizados para la animación de las tarjetas al pasar el ratón */
+        .card-hover-effect {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+        .card-hover-effect:hover {
+            transform: translateY(-2px) scale(1.01); /* Ligeramente hacia arriba y más grande */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
+        }
+        /* Estilo para las tarjetas seleccionadas - cambiado a celeste */
+        .card-selected {
+            border-color: #3B82F6 !important; /* Color celeste para el borde */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important; /* Anillo celeste alrededor de la tarjeta seleccionada */
+            transform: translateY(-3px) scale(1.02) !important; /* Ligeramente elevado */
+            background-color: #eff6ff !important; /* Fondo celeste muy claro */
+        }
+        /* Estilo para el selector de color personalizado */
+        .color-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .color-input::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-input::-webkit-color-swatch {
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px #ccc;
+        }
+        .color-input::-moz-color-swatch {
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px #ccc;
+        }
+        /* Estilo para el scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Cards con tamaño fijo */
+        .uniform-card {
+            height: 280px;
+            width: 220px; /* Ancho fijo en lugar de min-width y max-width */
+            flex-shrink: 0; /* Evita que se encoja */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .image-container {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px solid #D1D5DB;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Estilos para los títulos de sección mejorados */
+        .section-title {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto 2rem auto;
+        }
+        .step-number {
+            position: absolute;
+            top: -10px;
+            left: -30px;
+            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .title-text {
+            background: linear-gradient(135deg, #1E40AF, #3B82F6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            padding-left: 50px;
+        }
+        .title-underline {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-light font-inter text-dark min-h-screen flex flex-col items-center pt-4 pb-10 px-4 sm:px-6 lg:px-8">
+
+    <!-- Header Section - Ahora pegado a los bordes -->
+    <header class="fixed top-0 left-0 w-full bg-[#2589FF] text-white py-3 px-6 shadow-lg z-50">
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center justify-center w-10 h-10 bg-white bg-opacity-20 rounded">
+                <svg width="20" height="16" viewBox="0 0 23 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.3561 10.8656C10.3561 5.50135 3.43392 7.17766 3.43392 4.69276C3.43392 3.6278 4.20306 3.35172 5.46523 3.35172C6.7274 3.35172 7.14155 4.06169 7.31905 4.7125C7.41765 5.08721 7.61486 5.2647 7.93041 5.2647H9.52784C9.8631 5.2647 10.1392 4.98857 10.1392 4.65331C10.1392 2.72061 8.52203 0.90625 5.50465 0.90625C2.17173 0.90625 0.613715 2.4248 0.613715 4.69276C0.613715 9.85977 7.53595 8.16374 7.53595 10.8656C7.53595 12.0291 6.92462 12.4433 5.40607 12.4433C3.33532 12.4433 3.15778 11.0036 3.07889 10.6289C3.01973 10.3923 2.84228 10.0964 2.50701 10.0964H0.929265C0.594001 10.0964 0.337646 10.3725 0.337646 10.7078C0.337646 12.5222 1.89565 14.8887 5.40607 14.8887C7.89096 14.8887 10.3561 13.8435 10.3561 10.8656Z" fill="white"/>
+                    <path d="M22.1491 3.67596H20.6109C20.2756 3.67596 19.9995 3.95209 19.9995 4.28735V12.2351L15.503 4.14929C15.4044 3.97179 15.1283 3.67596 14.8128 3.67596H12.7026C12.3673 3.67596 12.0912 3.95209 12.0912 4.28735V10.6376C12.0912 10.6376 12.4856 14.9566 9.07382 15.9821C8.34413 16.1991 7.69336 16.5935 7.69336 17.3626C7.69336 18.1318 8.30469 18.7431 9.07382 18.7431C12.0518 18.7431 14.7931 15.7849 14.8325 12.8464V8.0147L19.6642 16.5738C20.0981 17.3035 20.3742 17.264 20.5911 17.264H22.1491C22.4844 17.264 22.7605 16.9879 22.7605 16.6527V4.26761C22.7605 3.93235 22.4844 3.65625 22.1491 3.65625V3.67596Z" fill="white"/>
+                </svg>
+            </div>
+            <div class="border-l border-white border-opacity-30 h-8 mx-2"></div>
+            <h1 class="text-xl font-medium">Generador de prompts - Tableros AI</h1>
+        </div>
+    </header>
+
+    <!-- Espaciador para el header fijo -->
+    <div class="h-16"></div>
+
+    <!-- Contenedor principal de la página -->
+    <div class="max-w-6xl w-full bg-white p-8 rounded-xl shadow-lg border border-border">
+
+        <!-- Título y descripción de la página -->
+        <header class="text-center mb-12">
+            <p class="text-lg text-gray-600">
+                Selecciona las características de tu tablero ideal y genera un prompt.
+            </p>
+        </header>
+
+        <!-- Sección de Selección de Colores -->
+        <section class="mb-12">
+            <div class="text-center mb-8">
+                <div class="section-title">
+                    <div class="step-number">1</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold title-text">Elegí la Paleta de Colores</h2>
+                    <div class="title-underline"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6" id="color-selection">
+                <!-- Tarjeta de color: Lauti -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="color" data-value="lauti">
+                    <div class="flex justify-center items-center h-24 mb-4 rounded-md overflow-hidden">
+                        <div class="w-1/2 h-full bg-lautiViolet"></div>
+                        <div class="w-1/2 h-full bg-lautiLight"></div>
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Lauti</h3>
+                        <p class="text-gray-500 text-sm">Tonos violetas y blancos.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta de color: Muni SN -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="color" data-value="muni-sn">
+                    <div class="flex justify-center items-center h-24 mb-4 rounded-md overflow-hidden">
+                        <div class="w-1/2 h-full bg-muniBlue"></div>
+                        <div class="w-1/2 h-full bg-muniLight"></div>
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Muni SN</h3>
+                        <p class="text-gray-500 text-sm">Tonos celestes y blancos.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta de color: Personalizado -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="color" data-value="custom">
+                    <div class="relative flex justify-center items-center h-24 mb-4 rounded-md overflow-hidden">
+                        <!-- Visual de dos mitades para el color personalizado -->
+                        <div class="w-1/2 h-full bg-blue-500" id="customColorHalf1"></div>
+                        <div class="w-1/2 h-full bg-blue-200" id="customColorHalf2"></div>
+                        <!-- Contenedor de inputs de color -->
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="flex space-x-2">
+                                <input type="color" value="#3B82F6" id="customColorInput1"
+                                        class="color-input w-8 h-8"
+                                        onclick="event.stopPropagation();">
+                                <input type="color" value="#DBEAFE" id="customColorInput2"
+                                        class="color-input w-8 h-8"
+                                        onclick="event.stopPropagation();">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Personalizado</h3>
+                        <p class="text-gray-500 text-sm">Elige tus propios colores.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Selección de Elementos del Tablero -->
+        <section class="mb-12">
+            <div class="text-center mb-8">
+            <div class="section-title">
+            <div class="step-number">2</div>
+            <h2 class="text-2xl sm:text-3xl font-bold title-text">Seleccioná los elementos visuales del Tablero</h2>
+            <div class="title-underline"></div>
+            </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6" id="chart-selection">
+                <!-- Tarjeta: Gráfico de Torta -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="torta">
+                    <div class="image-container mb-4">
+                        <img src="https://imgur.com/ntwS9J8.png" alt="Gráfico de Torta">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Gráfico de Torta</h3>
+                        <p class="text-gray-500 text-sm">Distribución porcentual.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Gráfico de Líneas -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="lineas">
+                    <div class="image-container mb-4">
+                        <img src="https://imgur.com/kEgU4SO.png" alt="Gráfico de Líneas">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Gráfico de Líneas</h3>
+                        <p class="text-gray-500 text-sm">Tendencias a lo largo del tiempo.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Gráfico de Barras -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="barras">
+                    <div class="image-container mb-4">
+                        <img src="https://imgur.com/jCBL8Tm.png" alt="Gráfico de Barras">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Gráfico de Barras</h3>
+                        <p class="text-gray-500 text-sm">Comparación de categorías.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Cards con KPIs -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="kpis">
+                    <div class="image-container mb-4">
+                        <img src="https://imgur.com/CC08YQ5.png" alt="Cards con KPIs">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Cards con KPIs</h3>
+                        <p class="text-gray-500 text-sm">Métricas clave destacadas.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Tablas -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="tabla">
+                    <div class="image-container mb-4">
+                        <img src="https://imgur.com/RptG7fh.png" alt="Tabla de Datos">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Tablas</h3>
+                        <p class="text-gray-500 text-sm">Visualización tabular de datos.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Mapa -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="mapa">
+                    <div class="image-container mb-4">
+                        <img src="https://imgur.com/aKUBVzQ.png" alt="Mapa">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Mapa</h3>
+                        <p class="text-gray-500 text-sm">Datos geográficos o de ubicación.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: AI Decision -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="ai-decision">
+                    <div class="image-container mb-4">
+                        <img src="https://placehold.co/100x100/9CA3AF/ffffff?text=IA" alt="AI Decision">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">AI Decision</h3>
+                        <p class="text-gray-500 text-sm">Deja que la IA elija los gráficos.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Todos los Gráficos -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 card-hover-effect cursor-pointer text-center uniform-card" data-category="chart" data-value="all">
+                    <div class="image-container mb-4">
+                        <img src="https://placehold.co/100x100/6B7280/ffffff?text=Todos" alt="Todos los Gráficos">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Todos</h3>
+                        <p class="text-gray-500 text-sm">Incluir todos los tipos de gráficos.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Selección de Origen de Datos -->
+        <section class="mb-12">
+            <div class="text-center mb-8">
+                <div class="section-title">
+                    <div class="step-number">3</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold title-text">Definí el Origen de los Datos</h2>
+                    <div class="title-underline"></div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6" id="data-source-selection">
+                <!-- Tarjeta: Datos desde JSON -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="data-source" data-value="json">
+                    <img src="https://placehold.co/100x100/FBBF24/ffffff?text=JSON" alt="Datos JSON" class="mx-auto mb-4 rounded-full">
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Archivo JSON</h3>
+                        <p class="text-gray-500 text-sm">Cargar datos desde un archivo JSON.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Datos desde Excel/CSV -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="data-source" data-value="excel-csv">
+                    <img src="https://placehold.co/100x100/3B82F6/ffffff?text=Excel/CSV" alt="Datos Excel/CSV" class="mx-auto mb-4 rounded-full">
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Excel / CSV</h3>
+                        <p class="text-gray-500 text-sm">Importar desde hojas de cálculo.</p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Datos desde Base de Datos -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="data-source" data-value="database">
+                    <img src="https://placehold.co/100x100/EF4444/ffffff?text=DB" alt="Datos Base de Datos" class="mx-auto mb-4 rounded-full">
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h3 class="text-xl font-medium text-dark mb-2">Base de Datos</h3>
+                        <p class="text-gray-500 text-sm">Conexión directa a una DB.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Generación de Prompt -->
+        <section>
+            <div class="text-center mb-8">
+                <div class="section-title">
+                    <div class="step-number">4</div>
+                    <h2 class="text-2xl sm:text-3xl font-bold title-text">Acá tenés tu prompt</h2>
+                    <div class="title-underline"></div>
+                </div>
+            </div>
+            <div class="bg-gray-100 p-6 rounded-lg border border-border mb-6">
+                <textarea id="generatedPrompt" rows="8" class="w-full bg-transparent resize-none outline-none text-gray-800 font-mono text-sm" readonly>
+                    <!-- El prompt se generara aca dinámicamente a medida que seleccionás su estructura -->
+                </textarea>
+            </div>
+            <div class="text-center">
+                <button id="copyPromptBtn" class="bg-accent hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-opacity-75">
+                    Copiar Prompt
+                </button>
+                <div id="copyMessage" class="mt-4 text-green-600 font-medium hidden">¡Prompt copiado al portapapeles!</div>
+            </div>
+        </section>
+
+        <div id="dbModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm text-center">
+                <h3 class="text-lg font-bold mb-4">Funcionalidad no implementada</h3>
+                <p class="mb-6">Todavía no está implementado. Por favor, exporta la tabla desde la base de datos a Excel o CSV.</p>
+                <button id="closeDbModal" class="px-4 py-2 bg-accent hover:bg-blue-600 text-white rounded">Cerrar</button>
+            </div>
+        </div>
+
+    <!-- Inputs ocultos para carga de archivos -->
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.json" style="display:none" />
+    <!-- Importación de la librería XLSX para manejar archivos Excel y CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Importación de la librería FileSaver.js para guardar archivos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Importación de la librería PapaParse para manejar archivos CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
+
+    <script>
+        // Objeto para almacenar las selecciones del usuario
+        const selections = {
+            color: null,
+            charts: [],
+            dataSource: null,
+            customColor1: '#3B82F6',
+            customColor2: '#DBEAFE'
+        };
+
+        // Referencias a los elementos
+        const colorSelectionContainer = document.getElementById('color-selection');
+        const chartSelectionContainer = document.getElementById('chart-selection');
+        const dataSourceSelectionContainer = document.getElementById('data-source-selection');
+        const generatedPromptTextarea = document.getElementById('generatedPrompt');
+        const copyPromptBtn = document.getElementById('copyPromptBtn');
+        const copyMessage = document.getElementById('copyMessage');
+        const customColorInput1 = document.getElementById('customColorInput1');
+        const customColorInput2 = document.getElementById('customColorInput2');
+        const customColorHalf1 = document.getElementById('customColorHalf1');
+        const customColorHalf2 = document.getElementById('customColorHalf2');
+
+        // Función para actualizar los colores personalizados
+        function updateCustomColors() {
+            customColorHalf1.style.backgroundColor = selections.customColor1;
+            customColorHalf2.style.backgroundColor = selections.customColor2;
+        }
+
+        // Event listeners para los inputs de color personalizado
+        customColorInput1.addEventListener('change', function(e) {
+            selections.customColor1 = e.target.value;
+            updateCustomColors();
+            updatePrompt();
+        });
+
+        customColorInput2.addEventListener('change', function(e) {
+            selections.customColor2 = e.target.value;
+            updateCustomColors();
+            updatePrompt();
+        });
+
+        // Objeto que contiene las descripciones estéticas específicas para cada tipo de gráfico
+        const chartAesthetics = {
+            'torta': 'Los gráficos de torta (donut charts) deben tener un contorno limpio, grosor uniforme, y etiquetas y porcentajes con tipografía clara. ',
+            'lineas': 'Los gráficos de líneas deben presentar líneas suaves y bordes discretos, con áreas de relleno semitransparente en el mismo tono de acento. ',
+            'barras': 'Los gráficos de barras deben ser estilizados con líneas suaves y bordes discretos, y áreas de relleno semitransparente en el mismo tono de acento. ',
+            'mapa': 'Los mapas deben ser minimalistas, con colores de fondo neutros y los datos resaltados en el color de acento. Los bordes y etiquetas deben ser sutiles y claros, evitando distracciones visuales. ',
+            'tabla': 'Las tablas deben tener un diseño limpio, con filas alternadas en tonos muy suaves para mejorar la legibilidad. Los encabezados deben estar destacados en negrita y con fondo ligeramente acentuado. Bordes sutiles y espaciado generoso entre celdas. ',
+            'kpis': 'Las cards que se utilizan para los KPIs deben ser adaptables al texto en caso de que los numeros sean extensos. '
+        };
+        // Función para actualizar el prompt
+        function updatePrompt() {
+            let prompt = "Genera un tablero de control (dashboard) interactivo y visualmente atractivo. Debes enviar el codigo listo para copiar unicamente en un App.jsx. El diseño debe ser minimalista, moderno y limpio, con un enfoque en la claridad de los datos. ";
+            prompt += "Características estéticas: Paleta limpia y ligera con fondo general muy claro (gris casi blanco) y tarjetas sobre fondo blanco puro. ";
+            prompt += "Las tarjetas deben tener un relieve suave, esquinas redondeadas generosas (8-12 px) y sombras difusas muy sutiles para dar sensación de profundidad. ";
+            prompt += "La tipografía debe ser 'Weissenhof Grotesk', con texto gris oscuro para títulos, números en gran tamaño y negrita con un color gris muy oscuro casi negro como acento principal. ";
+            prompt += "Asegura un espaciado amplio y modularidad, con bloques alineados en cuadrícula y abundante espacio en blanco alrededor de cada sección para respirar. ";
+            prompt += "Utiliza iconografía lineal minimalista: pictogramas monocromáticos con el mismo color de acento, sin rellenos pesados ni degradados. ";
+            
+            // 1. Colores
+            if (selections.color) {
+                if (selections.color === 'lauti') {
+                    prompt += ` Utiliza una paleta de colores vibrante basada en tonos violetas (como #7341A6) y complementarios blancos (#F4F7FE), transmitiendo una sensación de innovación y claridad.`;
+                } else if (selections.color === 'muni-sn') {
+                    prompt += ` Implementa una paleta de colores fresca y profesional con tonos celestes como principal, te envio el json con los datos visuales de este tema (El celeste es el principal): {"name":"Custom","visualStyles":{"*":{"*":{"background":[{"transparency":100}]}},"page":{"*":{"background":[{"color":{"solid":{"color":"#FFFFFF"}},"transparency":100}]}}},"dataColors":["#2589FF","#0477AD","#FABA20","#02D085","#A31515","#744EC2","#D9B300","#D64550","#3599B8","#DFBFBF","#4AC5BB","#5F6B6D","#FB8281","#F4D25A","#7F898A","#A4DDEE","#FDAB89","#B687AC","#28738A","#A78F8F","#168980","#293537","#BB4A4A","#B59525","#475052","#6A9FB0","#BD7150","#7B4F71","#1B4D5C","#706060","#0F5C55","#1C2325"]}, ideal para entornos corporativos o gubernamentales.`;
+                } else if (selections.color === 'custom') {
+                    prompt += ` Aplica una paleta de colores personalizada utilizando los códigos hexadecimales principales: ${selections.customColor1} y ${selections.customColor2}. Asegúrate de que los colores sean armónicos y accesibles.`;
+                }
+            } else {
+                prompt += ` Si no se especifica, utiliza una paleta de colores neutra con grises suaves, blancos y un color de acento sutil para resaltar elementos clave.`;
+            }
+
+            // 2. Gráficos
+            if (selections.charts.includes('ai-decision')) {
+                prompt += ` Permite que la inteligencia artificial decida la selección y disposición de los gráficos, optimizando la visualización de los datos proporcionados.`;
+            } else if (selections.charts.includes('all')) {
+                prompt += ` Incluye una variedad completa de visualizaciones: (Puede ser uno o varios en todos los casos) - Un gráfico de torta, grafico de líneas, un gráfico de barras, un grafico de tabla, un grafico de mapa y cards destacadas para mostrar los índices principales o más importantes, porcentajes o cantidades. `;
+                prompt += chartAesthetics['torta'];
+                prompt += chartAesthetics['lineas'];
+                prompt += chartAesthetics['barras'];
+                prompt += chartAesthetics['tabla'];
+                prompt += chartAesthetics['mapa'];
+                prompt += chartAesthetics['kpis'];
+                prompt += 'Los ejes y retículas deben ser apenas perceptibles, en gris muy suave. ';
+            } else if (selections.charts.length > 0) {
+                const selectedChartTypes = selections.charts.filter(chart => chart !== 'all' && chart !== 'ai-decision');
+                const chartNames = {
+                    'torta': 'un gráfico de torta',
+                    'lineas': 'un gráfico de líneas',
+                    'barras': 'un gráfico de barras',
+                    'kpis': 'cards destacadas para mostrar los índices principales o más importantes, porcentajes o cantidades',
+                    'tabla': 'una tabla de datos',
+                    'mapa': 'un mapa'
+                };
+                const selectedChartPrompts = selectedChartTypes.map(chart => chartNames[chart]);
+
+                if (selectedChartPrompts.length > 0) {
+                    prompt += ` Incorpora las siguientes visualizaciones: ${selectedChartPrompts.join(', ')}. `;
+                    let hasAxisChart = false;
+                    selectedChartTypes.forEach(chart => {
+                        if (chartAesthetics[chart]) {
+                            prompt += chartAesthetics[chart];
+                        }
+                        if (chart === 'lineas' || chart === 'barras') {
+                            hasAxisChart = true;
+                        }
+                    });
+                    if (hasAxisChart) {
+                        prompt += 'Los ejes y retículas deben ser apenas perceptibles, en gris muy suave. ';
+                    }
+                }
+            } else {
+                // Default charts if nothing selected
+                prompt += ` Por defecto, el tablero incluirá un gráfico de torta, un gráfico de líneas, y cards destacadas para mostrar los índices principales o más importantes, porcentajes o cantidades. `;
+                prompt += chartAesthetics['torta'];
+                prompt += chartAesthetics['lineas'];
+                prompt += 'Los ejes y retículas deben ser apenas perceptibles, en gris muy suave. ';
+            }
+
+            // 3. Origen de Datos
+            if (loadedSampleData && loadedSampleData.tables && loadedSampleData.tables.length) {
+                if (selections.dataSource === 'database') {
+                    prompt += ` El origen de datos del tablero está en una base de datos (SQL o NoSQL).`;
+                } else if (selections.dataSource === 'json') {
+                    prompt += ` El dataset del tablero se encuentra en un archivo JSON.`;
+                } else if (selections.dataSource === 'excel-csv') {
+                    prompt += ` El dataset del tablero se encuentra en un archivo Excel o CSV.`;
+                } else {
+                    prompt += ` El dataset del tablero se encuentra en un archivo cargado por el usuario (JSON, Excel o CSV).`;
+                }
+                prompt += ` No debes generar datos de ejemplo. Utiliza únicamente la estructura de los datos proporcionados para construir la lógica de carga y procesamiento, de modo que el tablero pueda leer correctamente los archivos reales del usuario. Los datos de ejemplo que se muestran a continuación son solo de guía para comprender la estructura y no deben ser utilizados como datos reales en el código generado.`;
+            } else if (selections.dataSource) {
+                let dataSourceText = '';
+                if (selections.dataSource === 'json') {
+                    dataSourceText = 'un archivo JSON';
+                } else if (selections.dataSource === 'excel-csv') {
+                    dataSourceText = 'un archivo Excel o CSV';
+                } else if (selections.dataSource === 'database') {
+                    dataSourceText = 'una base de datos (SQL o NoSQL)';
+                }
+                prompt += ` El dataset del tablero se encuentra en ${dataSourceText}.`;
+                prompt += ` Genera una funcion de carga de datos teniendo en cuenta la estructura del archivo y las columnas que contiene. No generes datos de ejemplo, ya que el usuario proporcionará un archivo.`;
+            } else {
+                // Solo si no hay archivo ni selección, aclarar por defecto
+                prompt += ` Por defecto, los datos de ejemplo se cargarán desde un archivo JSON con las siguientes columnas: "Producto", "Ventas", "Mes", "Ingresos", "Beneficio", "Clientes".`;
+            }
+            // Requisitos generales adicionales para el prompt
+            prompt += ` Asegúrate de que el diseño sea completamente responsivo para adaptarse a diferentes tamaños de pantalla (escritorio, tablet, móvil). El tablero debe ser interactivo, permitiendo filtros y la posibilidad de hacer clic en los gráficos para obtener más detalles. Utiliza íconos modernos y tipografía clara para mejorar la legibilidad. El objetivo es una experiencia de usuario intuitiva y eficiente.`;
+
+            generatedPromptTextarea.value = prompt;
+        }
+
+        function handleCardSelection(event) {
+            const clickedCard = event.currentTarget;
+            const category    = clickedCard.dataset.category;
+            const value       = clickedCard.dataset.value;
+
+            if (category === 'color' || category === 'data-source') {
+                // Selección única (colores y origen de datos)
+                const container = clickedCard.closest('section').querySelector('div[id$="-selection"]');
+                const currentSelected = container.querySelector('.card-selected');
+
+                if (currentSelected === clickedCard) {
+                // Deseleccionar si ya estaba seleccionado
+                clickedCard.classList.remove('card-selected');
+                selections[category] = null;
+                } else {
+                // Deseleccionar todos y marcar el actual
+                container.querySelectorAll('.card-hover-effect').forEach(c => c.classList.remove('card-selected'));
+                clickedCard.classList.add('card-selected');
+                selections[category] = value;
+                }
+
+                // Lógica extra para data-source
+                if (category === 'data-source') {
+                if (value === 'json' || value === 'excel-csv') {
+                    // Abre file picker con un solo click
+                    fileInput.accept = value === 'json' ? '.json' : '.csv,.xlsx,.xls';
+                    fileInput.value = '';
+                    fileInput.click();
+                }
+                else if (value === 'database') {
+                    // Muestra modal de “no implementado”
+                    document.getElementById('dbModal').classList.remove('hidden');
+                }
+                }
+            }
+            else if (category === 'chart') {
+                // Selección múltiple para gráficos
+                if (value === 'ai-decision') {
+                // Si ya estaba, limpiar todo; si no, marcar solo IA
+                if (selections.charts.includes('ai-decision')) {
+                    selections.charts = [];
+                    chartSelectionContainer.querySelectorAll('.card-hover-effect')
+                    .forEach(c => c.classList.remove('card-selected'));
+                } else {
+                    selections.charts = ['ai-decision'];
+                    chartSelectionContainer.querySelectorAll('.card-hover-effect')
+                    .forEach(c => c.classList.remove('card-selected'));
+                    clickedCard.classList.add('card-selected');
+                }
+                }
+                else if (value === 'all') {
+                // “Todos” alterna entre seleccionar todo o limpiar todo
+                if (selections.charts.includes('all')) {
+                    selections.charts = [];
+                    chartSelectionContainer.querySelectorAll('.card-hover-effect')
+                    .forEach(c => c.classList.remove('card-selected'));
+                } else {
+                    selections.charts = ['all', 'torta', 'lineas', 'barras', 'kpis', 'tabla', 'mapa'];
+                    chartSelectionContainer.querySelectorAll('.card-hover-effect')
+                    .forEach(c => c.classList.remove('card-selected'));
+                    selections.charts.forEach(val => {
+                    const card = chartSelectionContainer.querySelector(`[data-value="${val}"]`);
+                    if (card) card.classList.add('card-selected');
+                    });
+                }
+                }
+                else {
+                // Selección/desselección normal de cada gráfico
+                // Si estaba “AI” o “All”, limpiar todo primero
+                if (selections.charts.includes('ai-decision') || selections.charts.includes('all')) {
+                    selections.charts = [];
+                    chartSelectionContainer.querySelectorAll('.card-hover-effect')
+                    .forEach(c => c.classList.remove('card-selected'));
+                }
+                const idx = selections.charts.indexOf(value);
+                if (idx > -1) {
+                    // Ya seleccionado → quitarlo
+                    selections.charts.splice(idx, 1);
+                    clickedCard.classList.remove('card-selected');
+                } else {
+                    // No seleccionado → añadirlo
+                    selections.charts.push(value);
+                    clickedCard.classList.add('card-selected');
+                }
+                }
+            }
+
+            updatePrompt();
+        }
+
+        // Asignar event listeners a todas las tarjetas
+        document.querySelectorAll('.card-hover-effect').forEach(card => {
+        card.addEventListener('click', handleCardSelection);
+        });
+
+        // Listener para cerrar el modal de Base de Datos
+        document.getElementById('closeDbModal').addEventListener('click', () => {
+        document.getElementById('dbModal').classList.add('hidden');
+        });
+
+
+        // Inicializar colores personalizados y prompt
+        updateCustomColors();
+        // Removido: updatePrompt() para que el prompt no aparezca hasta la interacción
+
+        // Función para copiar el prompt al portapapeles
+        function copyPromptToClipboard() {
+            const promptText = generatedPromptTextarea.value;
+            // Usar la API moderna del portapapeles si está disponible
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(promptText).then(() => {
+                    showCopyMessage();
+                }).catch(err => {
+                    // Fallback si falla la API moderna
+                    fallbackCopyTextToClipboard(promptText);
+                });
+            } else {
+                // Fallback para navegadores más antiguos
+                fallbackCopyTextToClipboard(promptText);
+            }
+        }
+
+        // Función de fallback para copiar texto
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopyMessage();
+            } catch (err) {
+                console.error('Error al copiar:', err);
+            } finally {
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Función para mostrar el mensaje de confirmación
+        function showCopyMessage() {
+            copyMessage.classList.remove('hidden');
+            setTimeout(() => {
+                copyMessage.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Event listener para el botón de copiar
+        copyPromptBtn.addEventListener('click', copyPromptToClipboard);
+
+        // Referencias
+        const fileInput = document.getElementById('fileInput');
+        let loadedSampleData = null; // Guardar muestra para el prompt
+
+
+        // Procesar archivo cargado
+        fileInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.name.endsWith('.json')) {
+                const text = await file.text();
+                try {
+                    const json = JSON.parse(text);
+                    loadedSampleData = extractSampleFromJSON(json);
+                } catch {
+                    loadedSampleData = { error: 'El archivo JSON no es válido.' };
+                }
+            } else if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                loadedSampleData = extractSampleFromWorkbook(workbook);
+            }
+            updatePrompt();
+        });
+
+        // Extraer muestra de JSON
+        function extractSampleFromJSON(json) {
+            let tables = [];
+            if (Array.isArray(json)) {
+                tables.push({ name: 'Tabla', columns: Object.keys(json[0] || {}), rows: json.slice(0, 5) });
+            } else if (typeof json === 'object') {
+                for (const key in json) {
+                    if (Array.isArray(json[key]) && json[key].length && typeof json[key][0] === 'object') {
+                        tables.push({ name: key, columns: Object.keys(json[key][0]), rows: json[key].slice(0, 5) });
+                    }
+                }
+                if (tables.length === 0) {
+                    tables.push({ name: 'Tabla', columns: Object.keys(json), rows: [json] });
+                }
+            }
+            return { tables };
+        }
+
+        // Extraer muestra de Excel/CSV
+        function extractSampleFromWorkbook(workbook) {
+            let tables = [];
+            workbook.SheetNames.forEach(sheetName => {
+                const ws = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                if (json.length > 1) {
+                    const columns = json[0];
+                    const rows = json.slice(1, 6).map(row => {
+                        let obj = {};
+                        columns.forEach((col, i) => obj[col] = row[i]);
+                        return obj;
+                    });
+                    tables.push({ name: sheetName, columns, rows });
+                }
+            });
+            return { tables };
+        }
+
+        // Modifica updatePrompt para incluir la muestra si existe
+        const originalUpdatePrompt = updatePrompt;
+        updatePrompt = function() {
+            originalUpdatePrompt();
+            if (loadedSampleData && loadedSampleData.tables && loadedSampleData.tables.length) {
+                let sampleText = '\n\nEjemplo de estructura de datos cargada:\n';
+                loadedSampleData.tables.forEach(table => {
+                    sampleText += `Tabla: ${table.name}\nColumnas: ${table.columns.join(', ')}\n`;
+                    sampleText += 'Filas de ejemplo:\n';
+                    table.rows.forEach(row => {
+                        sampleText += JSON.stringify(row) + '\n';
+                    });
+                    sampleText += '\n';
+                });
+                generatedPromptTextarea.value += sampleText;
+            } else if (loadedSampleData && loadedSampleData.error) {
+                generatedPromptTextarea.value += '\n\n[Error al procesar archivo: ' + loadedSampleData.error + ']';
+            }
+        };
+    </script>
+</body>
+</html>
