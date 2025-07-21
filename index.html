@@ -21,8 +21,8 @@
                         light: '#F3F4F6', // Gris muy claro para fondos
                         dark: '#1F2937', // Gris oscuro para texto
                         border: '#D1D5DB', // Gris para bordes sutiles
-                        lautiViolet: '#7341A6', // Un violeta para Lauti
-                        lautiLight: '#F4F7FE', // Un violeta claro para Lauti
+                        aguasViolet: '#7341A6', // Un violeta para Aguas
+                        aguasLight: '#F4F7FE', // Un violeta claro para Aguas
                         muniBlue: '#2589FF', // Un azul para Muni SN
                         muniLight: '#F4F7FE' // Un azul claro para Muni SN
                     }
@@ -196,11 +196,11 @@
                 </div>
             </div>
             <div class="flex flex-wrap justify-center gap-6" id="color-selection">
-                <!-- Tarjeta de color: Lauti -->
-                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="color" data-value="lauti">
+                <!-- Tarjeta de color: Aguas -->
+                <div class="bg-white p-6 rounded-lg shadow-md border border-border card-hover-effect cursor-pointer text-center uniform-card" data-category="color" data-value="aguas">
                     <div class="flex justify-center items-center h-24 mb-4 rounded-md overflow-hidden">
-                        <div class="w-1/2 h-full bg-lautiViolet"></div>
-                        <div class="w-1/2 h-full bg-lautiLight"></div>
+                        <div class="w-1/2 h-full bg-aguasViolet"></div>
+                        <div class="w-1/2 h-full bg-aguasLight"></div>
                     </div>
                     <div class="flex-1 flex flex-col justify-center">
                         <h3 class="text-xl font-medium text-dark mb-2">Aguas</h3>
@@ -473,11 +473,11 @@
             'barras': 'Los gráficos de barras deben ser estilizados con líneas suaves y bordes discretos, y áreas de relleno semitransparente en el mismo tono de acento. ',
             'mapa': 'Los mapas deben ser minimalistas, con colores de fondo neutros y los datos resaltados en el color de acento. Los bordes y etiquetas deben ser sutiles y claros, evitando distracciones visuales. ',
             'tabla': 'Las tablas deben tener un diseño limpio, con filas alternadas en tonos muy suaves para mejorar la legibilidad. Los encabezados deben estar destacados en negrita y con fondo ligeramente acentuado. Bordes sutiles y espaciado generoso entre celdas. ',
-            'kpis': 'Las cards que se utilizan para los KPIs deben ser adaptables al texto en caso de que los numeros sean extensos. '
+            'kpis': 'Las cards que se utilizan para los KPIs deben ser adaptables al texto en caso de que los numeros sean extensos. Para la visualización de los KPI: Asegura que los valores numéricos de los KPIs (ingresos, costos, ganancias, unidades vendidas, montos, etc) se muestren sin decimales (sin centavos) y que la fuente se adapte para acomodar números muy grandes (millones, miles de millones) sin desbordarse de sus tarjetas. La presentación debe priorizar la legibilidad y la claridad, ajustando el tamaño de la fuente o el espaciado si es necesario para evitar cortes o solapamientos.'
         };
         // Función para actualizar el prompt
         function updatePrompt() {
-            let prompt = "Genera un tablero de control (dashboard) interactivo y visualmente atractivo. Debes enviar el codigo listo para copiar unicamente en un App.jsx. El diseño debe ser minimalista, moderno y limpio, con un enfoque en la claridad de los datos. ";
+            let prompt = "Genera un tablero de control (dashboard) interactivo y visualmente atractivo. Debes enviar el codigo listo para hacer deploy desde gemini. >>MUY IMPORTANTE: SIN ERRORES<< Gemini debe ser capaz de hacer deploy con las herramientas que ya tiene, no utilizar librerias que no esten incorporadas o no esten al alcance de gemini, debe ser lo minimo propenso a errores posible. El diseño debe ser minimalista, moderno y limpio, con un enfoque en la claridad de los datos. ";
             prompt += "Características estéticas: Paleta limpia y ligera con fondo general muy claro (gris casi blanco) y tarjetas sobre fondo blanco puro. ";
             prompt += "Las tarjetas deben tener un relieve suave, esquinas redondeadas generosas (8-12 px) y sombras difusas muy sutiles para dar sensación de profundidad. ";
             prompt += "La tipografía debe ser 'Weissenhof Grotesk', con texto gris oscuro para títulos, números en gran tamaño y negrita con un color gris muy oscuro casi negro como acento principal. ";
@@ -486,7 +486,7 @@
             
             // 1. Colores
             if (selections.color) {
-                if (selections.color === 'lauti') {
+                if (selections.color === 'aguas') {
                     prompt += ` Utiliza una paleta de colores vibrante basada en tonos violetas (como #7341A6) y complementarios blancos (#F4F7FE), transmitiendo una sensación de innovación y claridad.`;
                 } else if (selections.color === 'muni-sn') {
                     prompt += ` Implementa una paleta de colores fresca y profesional con tonos celestes como principal, te envio el json con los datos visuales de este tema (El celeste es el principal): {"name":"Custom","visualStyles":{"*":{"*":{"background":[{"transparency":100}]}},"page":{"*":{"background":[{"color":{"solid":{"color":"#FFFFFF"}},"transparency":100}]}}},"dataColors":["#2589FF","#0477AD","#FABA20","#02D085","#A31515","#744EC2","#D9B300","#D64550","#3599B8","#DFBFBF","#4AC5BB","#5F6B6D","#FB8281","#F4D25A","#7F898A","#A4DDEE","#FDAB89","#B687AC","#28738A","#A78F8F","#168980","#293537","#BB4A4A","#B59525","#475052","#6A9FB0","#BD7150","#7B4F71","#1B4D5C","#706060","#0F5C55","#1C2325"]}, ideal para entornos corporativos o gubernamentales.`;
